@@ -1,23 +1,21 @@
-import { createError } from 'apollo-errors';
+import { ApolloError } from 'apollo-server-errors';
 
-export const AccessDeniedError = createError('AccessDeniedError', {
-  message: 'You do not have access to this resource',
-  options: { showPath: true },
-});
-export const ValidationFailureError = createError('ValidationFailureError', {
-  message: 'You attempted to perform an invalid mutation',
-  options: { showPath: true },
-});
-export const LimitsExceededError = createError('LimitsExceededError', {
-  message: 'Your request exceeded server limits',
-  options: { showPath: true },
-});
+export const ValidationFailureError = (extensions: {
+  data: { errors: { msg: string; data: Record<string, any> }[] };
+}) =>
+  new ApolloError(
+    'You attempted to perform an invalid mutation',
+    'KS_VALIDATION_FAILURE_CODE',
+    extensions
+  );
 
-export const accessDeniedError = (
-  type: 'query' | 'mutation',
-  target?: string,
-  internalData = {},
-  extraData = {}
-) => {
-  return new AccessDeniedError({ data: { type, target, ...extraData }, internalData });
-};
+export const LimitsExceededError = (data: {
+  listKey: string;
+  type: 'maxResults' | 'maxTotalResults';
+  limit: number;
+}) => new ApolloError('Your request exceeded server limits', 'KS_LIMITS_EXCEEDED_CODE', { data });
+
+export const AccessDeniedError = (type: 'query' | 'mutation') =>
+  new ApolloError('You do not have access to this resource', 'KS_ACCESS_DENIED_CODE', {
+    data: { type },
+  });

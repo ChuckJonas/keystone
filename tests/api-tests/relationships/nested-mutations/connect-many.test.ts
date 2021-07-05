@@ -265,14 +265,14 @@ describe('non-matching filter', () => {
 
   test(
     'errors if connecting items which cannot be found during update',
-    runner(async ({ context }) => {
+    runner(async ({ context, graphQLRequest }) => {
       const FAKE_ID = 100;
 
       // Create an item to link against
       const createUser = await context.lists.User.createOne({ data: {} });
 
       // Create an item that does the linking
-      const { data, errors } = await context.graphql.raw({
+      const { body } = await graphQLRequest({
         query: `
               mutation {
                 updateUser(
@@ -288,9 +288,9 @@ describe('non-matching filter', () => {
               }`,
       });
 
-      expect(data).toEqual({ updateUser: null });
-      expectNestedError(errors, [
-        { path: ['updateUser'], message: 'Unable to create and/or connect 1 User.notes<Note>' },
+      expect(body.data).toEqual({ updateUser: null });
+      expect(body.errors).toEqual([
+        { message: 'Unable to create and/or connect 1 User.notes<Note>', path: ['updateUser'] },
       ]);
     })
   );

@@ -218,7 +218,9 @@ describe('with access control', () => {
         });
 
         expect(data).toEqual({ createUserToNotesNoRead: { id: expect.any(String), notes: null } });
-        expectAccessDenied(errors, [{ path: ['createUserToNotesNoRead', 'notes'] }]);
+        expectAccessDenied(errors, [
+          { path: ['createUserToNotesNoRead', 'notes'], type: 'mutation' },
+        ]);
       })
     );
 

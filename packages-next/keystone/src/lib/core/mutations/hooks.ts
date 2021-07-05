@@ -1,9 +1,9 @@
 import { ValidationFailureError } from '../graphql-errors';
 import { promiseAllRejectWithAllErrors } from '../utils';
 
-type ValidationError = { msg: string; data: {}; internalData: {} };
+type ValidationError = { msg: string; data: {} };
 
-type AddValidationError = (msg: string, data?: {}, internalData?: {}) => void;
+type AddValidationError = (msg: string, data?: {}) => void;
 
 export async function validationHook(
   listKey: string,
@@ -13,20 +13,13 @@ export async function validationHook(
 ) {
   const errors: ValidationError[] = [];
 
-  await validationHook((msg, data = {}, internalData = {}) => {
-    errors.push({ msg, data, internalData });
-  });
+  const _addValidationError: AddValidationError = (msg, data = {}) => {
+    errors.push({ msg, data });
+  };
 
+  await validationHook(_addValidationError);
   if (errors.length) {
-    throw new ValidationFailureError({
-      data: {
-        messages: errors.map(e => e.msg),
-        errors: errors.map(e => e.data),
-        listKey,
-        operation,
-      },
-      internalData: { errors: errors.map(e => e.internalData), data: originalInput },
-    });
+    throw ValidationFailureError({ data: { errors } });
   }
 }
 

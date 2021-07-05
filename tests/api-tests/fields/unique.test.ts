@@ -69,11 +69,11 @@ testModules
                 `,
               variables: { data: { testField: mod.exampleValue(matrixValue) } },
             });
-            expect(body.data).toEqual({ createTest: null });
             expectInternalServerError(body.errors, [
               {
                 path: ['createTest'],
-                message: `\nInvalid \`prisma.test.create()\` invocation:\n\n\n  Unique constraint failed on the fields: (\`testField\`)`,
+                message:
+                  '\nInvalid `prisma.test.create()` invocation:\n\n\n  Unique constraint failed on the fields: (`testField`)',
               },
             ]);
           })
@@ -95,12 +95,11 @@ testModules
               },
             });
 
-            expect(body.data.foo).not.toBe(null);
-            expect(body.data.bar).toBe(null);
             expectInternalServerError(body.errors, [
               {
                 path: ['bar'],
-                message: `\nInvalid \`prisma.test.create()\` invocation:\n\n\n  Unique constraint failed on the fields: (\`testField\`)`,
+                message:
+                  '\nInvalid `prisma.test.create()` invocation:\n\n\n  Unique constraint failed on the fields: (`testField`)',
               },
             ]);
           })

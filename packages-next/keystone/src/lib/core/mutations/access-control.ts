@@ -4,7 +4,7 @@ import {
   validateFieldAccessControl,
   validateNonCreateListAccessControl,
 } from '../access-control';
-import { accessDeniedError } from '../graphql-errors';
+import { AccessDeniedError } from '../graphql-errors';
 import { mapUniqueWhereToWhere } from '../queries/resolvers';
 import { InitialisedList } from '../types-for-lists';
 import { getPrismaModelForList } from '../utils';
@@ -27,7 +27,7 @@ export async function getAccessControlledItemForDelete(
     args: { context, listKey: list.listKey, operation: 'delete', session: context.session, itemId },
   });
   if (access === false) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
   const prismaModel = getPrismaModelForList(context.prisma, list.listKey);
   let where: PrismaFilter = mapUniqueWhereToWhere(
@@ -39,7 +39,7 @@ export async function getAccessControlledItemForDelete(
   }
   const item = await prismaModel.findFirst({ where });
   if (item === null) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
   return item;
 }
@@ -70,7 +70,7 @@ export async function checkFieldAccessControlForUpdate(
   );
 
   if (results.some(canAccess => !canAccess)) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
 }
 
@@ -95,7 +95,7 @@ export async function getAccessControlledItemForUpdate(
     },
   });
   if (accessControl === false) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
   const uniqueWhereInWhereForm = mapUniqueWhereToWhere(list, resolvedUniqueWhere);
   const item = await prismaModel.findFirst({
@@ -107,7 +107,7 @@ export async function getAccessControlledItemForUpdate(
           },
   });
   if (!item) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
   await checkFieldAccessControlForUpdate(list, context, update, item);
   return item;
@@ -129,7 +129,7 @@ export async function applyAccessControlForCreate(
     },
   });
   if (!result) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
   await checkFieldAccessControlForCreate(list, context, originalInput);
 }
@@ -157,7 +157,7 @@ async function checkFieldAccessControlForCreate(
   );
 
   if (results.some(canAccess => !canAccess)) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
 }
 
@@ -173,6 +173,6 @@ async function getStringifiedItemIdFromUniqueWhereInput(
     const item = await context.sudo().lists[listKey].findOne({ where: uniqueWhere as any });
     return item.id;
   } catch (err) {
-    throw accessDeniedError('mutation');
+    throw AccessDeniedError('mutation');
   }
 }

@@ -1,4 +1,5 @@
 import { KeystoneContext, TypesForList, schema } from '@keystone-next/types';
+import { UserInputError } from 'apollo-server-errors';
 import { resolveUniqueWhereInput, UniqueInputFilter, UniquePrismaFilter } from '../where-inputs';
 import { InitialisedList } from '../types-for-lists';
 import {
@@ -136,7 +137,7 @@ function assertValidManyOperation(
     !Array.isArray(val.disconnect) &&
     !val.disconnectAll
   ) {
-    throw new Error(`Nested mutation operation invalid for ${target}`);
+    throw new UserInputError(`Nested mutation operation invalid for ${target}`);
   }
 }
 
@@ -186,6 +187,7 @@ async function handleCreateAndUpdate(
     try {
       await context.db.lists[foreignList.listKey].findOne({ where: value.connect as any });
     } catch (err) {
+      // Probably an access control error?
       throw new Error(`Unable to connect a ${target}`);
     }
     return {
@@ -198,6 +200,8 @@ async function handleCreateAndUpdate(
       try {
         return await nestedMutationState.create(createInput, foreignList);
       } catch (err) {
+        // Need to think about all the things this could be... should we
+        // perhaps just re-raise an apollo error with this error?
         throw new Error(`Unable to create a ${target}`);
       }
     })();
@@ -244,7 +248,7 @@ export function resolveRelateToOneForUpdateInput(
       return undefined;
     }
     if (value.connect && value.create) {
-      throw new Error(`Nested mutation operation invalid for ${target}`);
+      throw new UserInputError(`Nested mutation operation invalid for ${target}`);
     }
     if (value.connect || value.create) {
       return handleCreateAndUpdate(value, nestedMutationState, context, foreignList, target);

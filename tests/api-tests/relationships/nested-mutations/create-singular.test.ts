@@ -256,12 +256,15 @@ describe('with access control', () => {
 
               // Assert it throws an access denied error
               expect(data).toEqual({ [`createEventTo${group.name}`]: null });
-              expectNestedError(errors, [
-                {
-                  path: [`createEventTo${group.name}`],
-                  message: `Unable to create a EventTo${group.name}.group<${group.name}>`,
-                },
-              ]);
+              expect(errors).toMatchObject([{ extension: { code: '' }, path: [] }]);
+
+              expect(errors).toHaveLength(1);
+              const error = errors![0];
+              expect(error.message).toEqual(
+                `Unable to create a EventTo${group.name}.group<${group.name}>`
+              );
+              expect(error.path).toHaveLength(1);
+              expect(error.path![0]).toEqual(`createEventTo${group.name}`);
             }
             // Confirm it didn't insert either of the records anyway
             const data1 = await context.lists[group.name].findMany({

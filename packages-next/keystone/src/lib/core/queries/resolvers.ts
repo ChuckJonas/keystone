@@ -5,6 +5,7 @@ import {
   OrderDirection,
 } from '@keystone-next/types';
 import { GraphQLResolveInfo } from 'graphql';
+import { UserInputError } from 'apollo-server-errors';
 import { validateNonCreateListAccessControl } from '../access-control';
 import {
   InputFilter,
@@ -13,7 +14,7 @@ import {
   resolveUniqueWhereInput,
   resolveWhereInput,
 } from '../where-inputs';
-import { accessDeniedError, LimitsExceededError } from '../graphql-errors';
+import { AccessDeniedError, LimitsExceededError } from '../graphql-errors';
 import { InitialisedList } from '../types-for-lists';
 import { getPrismaModelForList, getDBFieldKeyForFieldOnMultiField } from '../utils';
 
@@ -102,13 +103,13 @@ export async function findOne(
 ) {
   const filter = await findOneFilter(args, list, context);
   if (filter === false) {
-    throw accessDeniedError('query');
+    throw AccessDeniedError('query');
   }
   const item = await getPrismaModelForList(context.prisma, list.listKey).findFirst({
     where: filter,
   });
   if (item === null) {
-    throw accessDeniedError('query');
+    throw AccessDeniedError('query');
   }
   return item;
 }
@@ -127,7 +128,7 @@ export async function findMany(
   applyEarlyMaxResults(first, list);
 
   if (resolvedWhere === false) {
-    throw accessDeniedError('query');
+    throw AccessDeniedError('query');
   }
   const results = await getPrismaModelForList(context.prisma, list.listKey).findMany({
     where: extraFilter === undefined ? resolvedWhere : { AND: [resolvedWhere, extraFilter] },
@@ -159,7 +160,7 @@ async function resolveOrderBy(
       orderBy.map(async orderBySelection => {
         const keys = Object.keys(orderBySelection);
         if (keys.length !== 1) {
-          throw new Error(
+          throw new UserInputError(
             `Only a single key must be passed to ${list.types.orderBy.graphQLType.name}`
           );
         }
@@ -169,7 +170,7 @@ async function resolveOrderBy(
         const value = orderBySelection[fieldKey];
 
         if (value === null) {
-          throw new Error('null cannot be passed as an order direction');
+          throw new UserInputError('null cannot be passed as an order direction');
         }
 
         const field = list.fields[fieldKey];
@@ -207,15 +208,12 @@ export async function count(
 ) {
   const resolvedWhere = await findManyFilter(list, context, where || {}, search);
   if (resolvedWhere === false) {
-    throw accessDeniedError('query');
+    throw AccessDeniedError('query');
   }
   return getPrismaModelForList(context.prisma, list.listKey).count({
     where: resolvedWhere,
   });
 }
-
-const limitsExceedError = (args: { type: string; limit: number; list: string }) =>
-  new LimitsExceededError({ data: args });
 
 function applyEarlyMaxResults(_first: number | null | undefined, list: InitialisedList) {
   const first = _first ?? Infinity;
@@ -227,19 +225,27 @@ function applyEarlyMaxResults(_first: number | null | undefined, list: Initialis
   // * The query explicitly has a "first" that exceeds the limit
   // * The query has no "first", and has more results than the limit
   if (first < Infinity && first > list.maxResults) {
-    throw limitsExceedError({ list: list.listKey, type: 'maxResults', limit: list.maxResults });
+    throw LimitsExceededError({
+      listKey: list.listKey,
+      type: 'maxResults',
+      limit: list.maxResults,
+    });
   }
 }
 
 function applyMaxResults(results: unknown[], list: InitialisedList, context: KeystoneContext) {
   if (results.length > list.maxResults) {
-    throw limitsExceedError({ list: list.listKey, type: 'maxResults', limit: list.maxResults });
+    throw LimitsExceededError({
+      listKey: list.listKey,
+      type: 'maxResults',
+      limit: list.maxResults,
+    });
   }
   if (context) {
     context.totalResults += Array.isArray(results) ? results.length : 1;
     if (context.totalResults > context.maxTotalResults) {
-      throw limitsExceedError({
-        list: list.listKey,
+      throw LimitsExceededError({
+        listKey: list.listKey,
         type: 'maxTotalResults',
         limit: context.maxTotalResults,
       });

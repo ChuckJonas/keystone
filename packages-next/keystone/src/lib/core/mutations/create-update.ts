@@ -201,11 +201,11 @@ async function resolveInputForCreateOrUpdate(
         field.__legacy?.isRequired &&
         ((operation === 'create' && val == null) || (operation === 'update' && val === null))
       ) {
-        addValidationError(
-          `Required field "${fieldKey}" is null or undefined.`,
-          { resolvedData, operation, originalInput },
-          {}
-        );
+        addValidationError(`Required field "${fieldKey}" is null or undefined.`, {
+          resolvedData,
+          operation,
+          originalInput,
+        });
       }
     }
   });

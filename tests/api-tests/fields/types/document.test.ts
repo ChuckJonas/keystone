@@ -282,8 +282,7 @@ describe('Document field type', () => {
           'query ($id: ID!){ Author(where: { id: $id }) { badBio { document(hydrateRelationships: true) } } }',
         variables: { id: badBob.id },
       });
-      // FIXME: The path doesn't match the null field here!
-      expect(body.data).toEqual({ Author: { badBio: null } });
+      expect(body.data!.Author.badBio).toBe(null);
       expectInternalServerError(body.errors, [
         {
           path: ['Author', 'badBio', 'document'],

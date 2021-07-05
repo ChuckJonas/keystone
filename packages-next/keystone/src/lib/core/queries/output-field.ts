@@ -11,7 +11,7 @@ import {
 } from '@keystone-next/types';
 import { GraphQLResolveInfo } from 'graphql';
 import { validateFieldAccessControl, validateNonCreateListAccessControl } from '../access-control';
-import { accessDeniedError } from '../graphql-errors';
+import { AccessDeniedError } from '../graphql-errors';
 import { resolveWhereInput } from '../where-inputs';
 import { ResolvedDBField, ResolvedRelationDBField } from '../resolve-relationships';
 import { InitialisedList } from '../types-for-lists';
@@ -49,7 +49,7 @@ function getRelationVal(
       count: async ({ where, search, first, skip }: FindManyArgsValue) => {
         const filter = await findManyFilter(foreignList, context, where, search);
         if (filter === false) {
-          throw accessDeniedError('query');
+          throw AccessDeniedError('query');
         }
         const count = applyFirstSkipToCount({
           count: await getPrismaModelForList(context.prisma, dbField.list).count({
@@ -83,7 +83,7 @@ function getRelationVal(
       },
     });
     if (access === false) {
-      throw accessDeniedError('query');
+      throw AccessDeniedError('query');
     }
 
     return getPrismaModelForList(context.prisma, dbField.list).findFirst({
@@ -152,7 +152,7 @@ export function outputTypeField(
         // If the client handles errors correctly, it should be able to
         // receive partial data (for the fields the user has access to),
         // and then an `errors` array of AccessDeniedError's
-        throw accessDeniedError('query', fieldKey, { itemId: rootVal.id });
+        throw AccessDeniedError('query');
       }
 
       // Only static cache hints are supported at the field level until a use-case makes it clear what parameters a dynamic hint would take

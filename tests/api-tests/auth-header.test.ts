@@ -95,7 +95,8 @@ describe('Auth testing', () => {
       }
       const { data, errors } = await context.graphql.raw({ query: '{ allUsers { id } }' });
       expect(data).toEqual({ allUsers: null });
-      expectAccessDenied(errors, [{ path: ['allUsers'] }]);
+
+      expectAccessDenied(errors, [{ path: ['allUsers'], type: 'query' }]);
     })
   );
 
