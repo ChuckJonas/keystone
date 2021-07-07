@@ -20,11 +20,10 @@ type IdType = any;
 const expectNoAccess = <N extends string>(
   data: Record<N, null> | null | undefined,
   errors: readonly GraphQLError[] | undefined,
-  name: N,
-  type: 'query' | 'mutation'
+  name: N
 ) => {
   expect(data?.[name]).toBe(null);
-  expectAccessDenied(errors, [{ path: [name], type }]);
+  expectAccessDenied(errors, [{ path: [name] }]);
 };
 
 const expectNamedArray = <T extends { id: IdType }, N extends string>(
@@ -159,7 +158,7 @@ describe('Authed', () => {
       expect(data).toEqual({
         authenticatedItem: { id: user.id, yesRead: user.yesRead, noRead: null },
       });
-      expectAccessDenied(errors, [{ path: ['authenticatedItem', 'noRead'], type: 'query' }]);
+      expectAccessDenied(errors, [{ path: ['authenticatedItem', 'noRead'] }]);
     });
 
     (['imperative', 'declarative'] as const).forEach(mode => {
@@ -205,14 +204,14 @@ describe('Authed', () => {
                 expect(data?.[listKey].id).toEqual(invalidId);
               } else {
                 // but declarative should not
-                expectNoAccess(data, errors, listKey, 'query');
+                expectNoAccess(data, errors, listKey);
               }
             });
 
             test(`single not existing: ${JSON.stringify(access)}`, async () => {
               const query = `query { ${listKey}(where: { id: "${FAKE_ID[provider]}" }) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, listKey, 'query');
+              expectNoAccess(data, errors, listKey);
             });
 
             test(`multiple not existing: ${JSON.stringify(access)}`, async () => {
@@ -286,7 +285,7 @@ describe('Authed', () => {
               const updateMutationName = `update${nameFn[mode](access)}`;
               const query = `mutation { ${updateMutationName}(id: "${FAKE_ID[provider]}", data: { name: "bar" }) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, updateMutationName, 'mutation');
+              expectNoAccess(data, errors, updateMutationName);
             });
 
             test(`denies by declarative: ${JSON.stringify(access)}`, async () => {
@@ -305,7 +304,7 @@ describe('Authed', () => {
                   query: `mutation { ${updateMutationName}(id: "${invalidId}", data: { name: "Hello" }) { id name } }`,
                 });
               } else {
-                expectNoAccess(data, errors, updateMutationName, 'mutation');
+                expectNoAccess(data, errors, updateMutationName);
               }
             });
 
@@ -409,7 +408,7 @@ describe('Authed', () => {
                 expect(data?.[deleteMutationName]).not.toBe(null);
                 expect(data?.[deleteMutationName].id).toEqual(invalidId);
               } else {
-                expectNoAccess(data, errors, deleteMutationName, 'mutation');
+                expectNoAccess(data, errors, deleteMutationName);
               }
             });
 
@@ -417,7 +416,7 @@ describe('Authed', () => {
               const deleteMutationName = `delete${nameFn[mode](access)}`;
               const query = `mutation { ${deleteMutationName}(id: "${FAKE_ID[provider]}") { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, deleteMutationName, 'mutation');
+              expectNoAccess(data, errors, deleteMutationName);
             });
 
             test(`multi allowed: ${JSON.stringify(access)}`, async () => {
@@ -439,8 +438,8 @@ describe('Authed', () => {
                 expectNamedArray(data, errors, multiDeleteMutationName, [validId1, validId2]);
               } else {
                 expectAccessDenied(errors, [
-                  { path: [multiDeleteMutationName, 0], type: 'mutation' },
-                  { path: [multiDeleteMutationName, 1], type: 'mutation' },
+                  { path: [multiDeleteMutationName, 0] },
+                  { path: [multiDeleteMutationName, 1] },
                 ]);
                 expect(data).toEqual({ [multiDeleteMutationName]: [null, null] });
               }
@@ -455,9 +454,7 @@ describe('Authed', () => {
               if (mode === 'imperative') {
                 expectNamedArray(data, errors, multiDeleteMutationName, [validId1, invalidId]);
               } else {
-                expectAccessDenied(errors, [
-                  { path: [multiDeleteMutationName, 1], type: 'mutation' },
-                ]);
+                expectAccessDenied(errors, [{ path: [multiDeleteMutationName, 1] }]);
                 expect(data).toEqual({ [multiDeleteMutationName]: [{ id: validId1 }, null] });
               }
             });
@@ -467,8 +464,8 @@ describe('Authed', () => {
               const query = `mutation { ${multiDeleteMutationName}(ids: ["${FAKE_ID[provider]}", "${FAKE_ID_2[provider]}"]) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
               expectAccessDenied(errors, [
-                { path: [multiDeleteMutationName, 0], type: 'mutation' },
-                { path: [multiDeleteMutationName, 1], type: 'mutation' },
+                { path: [multiDeleteMutationName, 0] },
+                { path: [multiDeleteMutationName, 1] },
               ]);
               expect(data).toEqual({ [multiDeleteMutationName]: [null, null] });
             });

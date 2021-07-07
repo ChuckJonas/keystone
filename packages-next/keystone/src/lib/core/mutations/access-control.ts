@@ -27,7 +27,7 @@ export async function getAccessControlledItemForDelete(
     args: { context, listKey: list.listKey, operation: 'delete', session: context.session, itemId },
   });
   if (access === false) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
   const prismaModel = getPrismaModelForList(context.prisma, list.listKey);
   let where: PrismaFilter = mapUniqueWhereToWhere(
@@ -39,7 +39,7 @@ export async function getAccessControlledItemForDelete(
   }
   const item = await prismaModel.findFirst({ where });
   if (item === null) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
   return item;
 }
@@ -70,7 +70,7 @@ export async function checkFieldAccessControlForUpdate(
   );
 
   if (results.some(canAccess => !canAccess)) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
 }
 
@@ -95,7 +95,7 @@ export async function getAccessControlledItemForUpdate(
     },
   });
   if (accessControl === false) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
   const uniqueWhereInWhereForm = mapUniqueWhereToWhere(list, resolvedUniqueWhere);
   const item = await prismaModel.findFirst({
@@ -107,7 +107,7 @@ export async function getAccessControlledItemForUpdate(
           },
   });
   if (!item) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
   await checkFieldAccessControlForUpdate(list, context, update, item);
   return item;
@@ -129,7 +129,7 @@ export async function applyAccessControlForCreate(
     },
   });
   if (!result) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
   await checkFieldAccessControlForCreate(list, context, originalInput);
 }
@@ -157,7 +157,7 @@ async function checkFieldAccessControlForCreate(
   );
 
   if (results.some(canAccess => !canAccess)) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
 }
 
@@ -173,6 +173,6 @@ async function getStringifiedItemIdFromUniqueWhereInput(
     const item = await context.sudo().lists[listKey].findOne({ where: uniqueWhere as any });
     return item.id;
   } catch (err) {
-    throw AccessDeniedError('mutation');
+    throw AccessDeniedError();
   }
 }

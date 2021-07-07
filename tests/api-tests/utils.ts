@@ -49,14 +49,11 @@ export const expectGraphQLValidationError = (
   );
 };
 
-export const expectAccessDenied = (
-  errors: readonly any[] | undefined,
-  args: { path: any[]; type: 'query' | 'mutation' }[]
-) => {
+export const expectAccessDenied = (errors: readonly any[] | undefined, args: { path: any[] }[]) => {
   const unpackedErrors = unpackErrors(errors);
   expect(unpackedErrors).toEqual(
-    args.map(({ path, type }) => ({
-      extensions: { code: 'KS_ACCESS_DENIED_CODE', data: { type } },
+    args.map(({ path }) => ({
+      extensions: { code: 'KS_ACCESS_DENIED_CODE' },
       path,
       message: 'You do not have access to this resource',
     }))

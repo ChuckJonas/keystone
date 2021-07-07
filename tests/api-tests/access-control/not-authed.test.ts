@@ -17,11 +17,10 @@ import {
 const expectNoAccess = <N extends string>(
   data: Record<N, null> | null | undefined,
   errors: readonly GraphQLError[] | undefined,
-  name: N,
-  type: 'query' | 'mutation'
+  name: N
 ) => {
   expect(data?.[name]).toBe(null);
-  expectAccessDenied(errors, [{ path: [name], type }]);
+  expectAccessDenied(errors, [{ path: [name] }]);
 };
 
 type IdType = any;
@@ -69,7 +68,7 @@ describe(`Not authed`, () => {
               const createMutationName = `create${nameFn[mode](access)}`;
               const query = `mutation { ${createMutationName}(data: { name: "bar" }) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, createMutationName, 'mutation');
+              expectNoAccess(data, errors, createMutationName);
             });
           });
       });
@@ -93,24 +92,25 @@ describe(`Not authed`, () => {
               const { body } = await graphQLRequest({ query });
               // If create is not allowed on a field then there will be a query validation error
               if (access.read) {
+                const message = `Field "${fieldName}" is not defined by type "${nameFn[mode](
+                  listAccess
+                )}CreateInput".`;
                 expectGraphQLValidationError(body.errors, [
-                  {
-                    message: `Field "${fieldName}" is not defined by type "${nameFn[mode](
-                      listAccess
-                    )}CreateInput".`,
-                  },
+                  { message: expect.stringContaining(message) },
                 ]);
               } else {
                 expectGraphQLValidationError(body.errors, [
                   {
-                    message: `Field "${fieldName}" is not defined by type "${nameFn[mode](
-                      listAccess
-                    )}CreateInput".`,
+                    message: expect.stringContaining(
+                      `Field "${fieldName}" is not defined by type "${nameFn[mode](
+                        listAccess
+                      )}CreateInput".`
+                    ),
                   },
                   {
-                    message: `Cannot query field "${fieldName}" on type "${nameFn[mode](
-                      listAccess
-                    )}".`,
+                    message: expect.stringContaining(
+                      `Cannot query field "${fieldName}" on type "${nameFn[mode](listAccess)}".`
+                    ),
                   },
                 ]);
               }
@@ -135,8 +135,8 @@ describe(`Not authed`, () => {
               const fieldName = getFieldName(access);
               const query = `mutation { ${createMutationName}(data: { ${fieldName}: "bar" }) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expect(data?.[createMutationName]).toEqual(null);
-              expectAccessDenied(errors, [{ path: [createMutationName], type: 'mutation' }]);
+              expect(data).toEqual({ [createMutationName]: null });
+              expectAccessDenied(errors, [{ path: [createMutationName] }]);
             });
           });
       });
@@ -153,7 +153,7 @@ describe(`Not authed`, () => {
               const allQueryName = `all${nameFn[mode](access)}s`;
               const query = `query { ${allQueryName} { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, allQueryName, 'query');
+              expectNoAccess(data, errors, allQueryName);
             });
 
             test(`count denied: ${JSON.stringify(access)}`, async () => {
@@ -162,14 +162,15 @@ describe(`Not authed`, () => {
               }sCount`;
               const query = `query { ${countName} }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, countName, 'query');
+              expect(data).toEqual({ [countName]: null });
+              expectAccessDenied(errors, [{ path: [countName] }]);
             });
 
             test(`single denied: ${JSON.stringify(access)}`, async () => {
               const singleQueryName = nameFn[mode](access);
               const query = `query { ${singleQueryName}(where: { id: "abc123" }) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, singleQueryName, 'query');
+              expectNoAccess(data, errors, singleQueryName);
             });
           });
       });
@@ -195,10 +196,8 @@ describe(`Not authed`, () => {
                 .lists[listKey].updateOne({ id: item.id, data: { [fieldName]: 'hello' } });
               const query = `query { ${singleQueryName}(where: { id: "${item.id}" }) { id ${fieldName} } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectAccessDenied(errors, [{ path: [singleQueryName, fieldName], type: 'query' }]);
-              expect(data?.[singleQueryName]).not.toBe(null);
-              expect(data?.[singleQueryName].id).not.toBe(null);
-              expect(data?.[singleQueryName][fieldName]).toBe(null);
+              expectAccessDenied(errors, [{ path: [singleQueryName, fieldName] }]);
+              expect(data).toEqual({ [singleQueryName]: { id: item.id, [fieldName]: null } });
             });
             test(`field allowed - multi: ${JSON.stringify(access)}`, async () => {
               const listAccess = {
@@ -217,8 +216,8 @@ describe(`Not authed`, () => {
               const query = `query { ${allQueryName} { id ${fieldName} } }`;
               const { data, errors } = await context.graphql.raw({ query });
               expectAccessDenied(errors, [
-                { path: [allQueryName, 0, fieldName], type: 'query' },
-                { path: [allQueryName, 1, fieldName], type: 'query' },
+                { path: [allQueryName, 0, fieldName] },
+                { path: [allQueryName, 1, fieldName] },
               ]);
               expect(data).toEqual({
                 [allQueryName]: [
@@ -247,7 +246,11 @@ describe(`Not authed`, () => {
               const query = `query { ${singleQueryName}(where: { id: "${item.id}" }) { id ${fieldName} } }`;
               const { body } = await graphQLRequest({ query });
               expectGraphQLValidationError(body.errors, [
-                { message: `Cannot query field "${fieldName}" on type "${listKey}".` },
+                {
+                  message: expect.stringContaining(
+                    `Cannot query field "${fieldName}" on type "${listKey}".`
+                  ),
+                },
               ]);
               expect(body.data).toBe(undefined);
             });
@@ -263,7 +266,11 @@ describe(`Not authed`, () => {
               const query = `query { ${allQueryName} { id ${fieldName} } }`;
               const { body } = await graphQLRequest({ query });
               expectGraphQLValidationError(body.errors, [
-                { message: `Cannot query field "${fieldName}" on type "${listKey}".` },
+                {
+                  message: expect.stringContaining(
+                    `Cannot query field "${fieldName}" on type "${listKey}".`
+                  ),
+                },
               ]);
               expect(body.data).toBe(undefined);
             });
@@ -282,7 +289,7 @@ describe(`Not authed`, () => {
               const updateMutationName = `update${nameFn[mode](access)}`;
               const query = `mutation { ${updateMutationName}(id: "${FAKE_ID[provider]}", data: { name: "bar" }) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, updateMutationName, 'mutation');
+              expectNoAccess(data, errors, updateMutationName);
             });
           });
       });
@@ -311,7 +318,9 @@ describe(`Not authed`, () => {
               // If update is not allowed on a field then there will be a query validation error
               expectGraphQLValidationError(body.errors, [
                 {
-                  message: `Field "${fieldName}" is not defined by type "YesCreateYesReadYesUpdateYesDeleteStaticListUpdateInput". Did you mean "NoCreateYesReadYesUpdate", "NoCreateNoReadYesUpdate", "YesCreateYesReadYesUpdate", or "YesCreateNoReadYesUpdate"?`,
+                  message: expect.stringContaining(
+                    `Field "${fieldName}" is not defined by type "${listKey}UpdateInput".`
+                  ),
                 },
               ]);
               expect(body.data).toBe(undefined);
@@ -337,7 +346,8 @@ describe(`Not authed`, () => {
               const fieldName = getFieldName(access);
               const query = `mutation { ${updateMutationName}(id: "${item.id}", data: { ${fieldName}: "bar" }) { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, updateMutationName, 'mutation');
+              expect(data).toEqual({ [updateMutationName]: null });
+              expectAccessDenied(errors, [{ path: [updateMutationName] }]);
             });
           });
       });
@@ -354,7 +364,7 @@ describe(`Not authed`, () => {
               const deleteMutationName = `delete${nameFn[mode](access)}`;
               const query = `mutation { ${deleteMutationName}(id: "${FAKE_ID[provider]}") { id } }`;
               const { data, errors } = await context.graphql.raw({ query });
-              expectNoAccess(data, errors, deleteMutationName, 'mutation');
+              expectNoAccess(data, errors, deleteMutationName);
             });
 
             test(`multi denied: ${JSON.stringify(access)}`, async () => {
@@ -363,9 +373,7 @@ describe(`Not authed`, () => {
               const { data, errors } = await context.graphql.raw({ query });
 
               expect(data).toEqual({ [multiDeleteMutationName]: [null] });
-              expectAccessDenied(errors, [
-                { path: [multiDeleteMutationName, 0], type: 'mutation' },
-              ]);
+              expectAccessDenied(errors, [{ path: [multiDeleteMutationName, 0] }]);
             });
           });
       });

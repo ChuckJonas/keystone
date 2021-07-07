@@ -49,7 +49,7 @@ function getRelationVal(
       count: async ({ where, search, first, skip }: FindManyArgsValue) => {
         const filter = await findManyFilter(foreignList, context, where, search);
         if (filter === false) {
-          throw AccessDeniedError('query');
+          throw AccessDeniedError();
         }
         const count = applyFirstSkipToCount({
           count: await getPrismaModelForList(context.prisma, dbField.list).count({
@@ -83,7 +83,7 @@ function getRelationVal(
       },
     });
     if (access === false) {
-      throw AccessDeniedError('query');
+      throw AccessDeniedError();
     }
 
     return getPrismaModelForList(context.prisma, dbField.list).findFirst({
@@ -152,7 +152,7 @@ export function outputTypeField(
         // If the client handles errors correctly, it should be able to
         // receive partial data (for the fields the user has access to),
         // and then an `errors` array of AccessDeniedError's
-        throw AccessDeniedError('query');
+        throw AccessDeniedError();
       }
 
       // Only static cache hints are supported at the field level until a use-case makes it clear what parameters a dynamic hint would take

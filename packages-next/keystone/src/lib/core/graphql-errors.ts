@@ -15,7 +15,5 @@ export const LimitsExceededError = (data: {
   limit: number;
 }) => new ApolloError('Your request exceeded server limits', 'KS_LIMITS_EXCEEDED_CODE', { data });
 
-export const AccessDeniedError = (type: 'query' | 'mutation') =>
-  new ApolloError('You do not have access to this resource', 'KS_ACCESS_DENIED_CODE', {
-    data: { type },
-  });
+export const AccessDeniedError = () =>
+  new ApolloError('You do not have access to this resource', 'KS_ACCESS_DENIED_CODE');

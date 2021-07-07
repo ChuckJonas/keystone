@@ -103,13 +103,13 @@ export async function findOne(
 ) {
   const filter = await findOneFilter(args, list, context);
   if (filter === false) {
-    throw AccessDeniedError('query');
+    throw AccessDeniedError();
   }
   const item = await getPrismaModelForList(context.prisma, list.listKey).findFirst({
     where: filter,
   });
   if (item === null) {
-    throw AccessDeniedError('query');
+    throw AccessDeniedError();
   }
   return item;
 }
@@ -128,7 +128,7 @@ export async function findMany(
   applyEarlyMaxResults(first, list);
 
   if (resolvedWhere === false) {
-    throw AccessDeniedError('query');
+    throw AccessDeniedError();
   }
   const results = await getPrismaModelForList(context.prisma, list.listKey).findMany({
     where: extraFilter === undefined ? resolvedWhere : { AND: [resolvedWhere, extraFilter] },
@@ -208,7 +208,7 @@ export async function count(
 ) {
   const resolvedWhere = await findManyFilter(list, context, where || {}, search);
   if (resolvedWhere === false) {
-    throw AccessDeniedError('query');
+    throw AccessDeniedError();
   }
   return getPrismaModelForList(context.prisma, list.listKey).count({
     where: resolvedWhere,
