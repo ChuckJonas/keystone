@@ -64,7 +64,7 @@ testModules
                     createTest(data: { name: "test entry" } ) { id }
                   }`,
             });
-            expect(data!.createTest).toBe(null);
+            expect(data).toEqual({ createTest: null });
             expectValidationError(errors, [
               {
                 path: ['createTest'],
@@ -98,7 +98,7 @@ testModules
                     updateTest(id: "${data0.id}" data: { name: "updated test entry", testField: null } ) { id }
                   }`,
             });
-            expect(data!.updateTest).toBe(null);
+            expect(data).toEqual({ updateTest: null });
             expectValidationError(errors, [
               {
                 path: ['updateTest'],

@@ -69,6 +69,7 @@ testModules
                 `,
               variables: { data: { testField: mod.exampleValue(matrixValue) } },
             });
+            expect(body.data).toEqual({ createTest: null });
             expectInternalServerError(body.errors, [
               {
                 path: ['createTest'],
