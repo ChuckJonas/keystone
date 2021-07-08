@@ -1,5 +1,22 @@
 # @keystone-next/keystone
 
+## 22.0.0
+
+### Major Changes
+
+- [#6027](https://github.com/keystonejs/keystone/pull/6027) [`38b78f2ae`](https://github.com/keystonejs/keystone/commit/38b78f2aeaf4c5d8176a1751ad8cb5a7acce2790) Thanks [@renovate](https://github.com/apps/renovate)! - Updated Prisma dependency to `2.26.0`.
+
+### Patch Changes
+
+- [#6045](https://github.com/keystonejs/keystone/pull/6045) [`253df44c2`](https://github.com/keystonejs/keystone/commit/253df44c2f8d6535a6425b2593eaed5380433d57) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Adjusted when `getAdminMeta` is called on fields so that they can see the metadata (excluding the results of `getAdminMeta` on fields) of other fields to do validation or etc.
+
+- Updated dependencies [[`38b78f2ae`](https://github.com/keystonejs/keystone/commit/38b78f2aeaf4c5d8176a1751ad8cb5a7acce2790), [`5f3d407d7`](https://github.com/keystonejs/keystone/commit/5f3d407d79171f04ae877e8eaed9a7f9d5671705), [`253df44c2`](https://github.com/keystonejs/keystone/commit/253df44c2f8d6535a6425b2593eaed5380433d57), [`c536b478f`](https://github.com/keystonejs/keystone/commit/c536b478fc89f2d933cddf8533e7d88030540a63)]:
+  - @keystone-next/fields@12.0.0
+  - @keystone-next/types@22.0.0
+  - @keystone-ui/core@3.1.1
+  - @keystone-next/admin-ui-utils@5.0.4
+  - @keystone-next/utils@1.0.2
+
 ## 21.0.2
 
 ### Patch Changes
